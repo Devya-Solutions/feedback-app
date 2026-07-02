@@ -80,8 +80,34 @@ export const api = {
         averageRating: number;
         byStatus: Record<string, number>;
       }>(`/admin/feedback/stats/summary`),
+    importPreview: async (file: File): Promise<ImportPreview> => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${BASE}/admin/feedback/import/preview`, {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await extractError(res));
+      return res.json() as Promise<ImportPreview>;
+    },
+    importApply: (rows: FeedbackImportRow[], autoSend: boolean) =>
+      req<ImportApplyResult>(`/admin/feedback/import/apply`, {
+        method: 'POST',
+        body: JSON.stringify({ rows, autoSend }),
+      }),
+    exportXlsxUrl: () => `${BASE}/admin/feedback/export/xlsx`,
   },
 };
+
+async function extractError(res: Response): Promise<string> {
+  try {
+    const j = await res.json();
+    return j?.message ?? j?.error ?? res.statusText;
+  } catch {
+    return res.statusText;
+  }
+}
 
 export type AdminCreateBody = {
   clientName: string;
@@ -103,6 +129,8 @@ export type AdminFeedback = {
   status: string;
   lang: string;
   sentAt: string | null;
+  emailOpenedAt: string | null;
+  emailOpenCount: number;
   openedAt: string | null;
   respondedAt: string | null;
   rating: number | null;
@@ -113,4 +141,22 @@ export type AdminFeedback = {
   lastReminderAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type FeedbackImportRow = {
+  index: number;
+  clientName: string;
+  clientEmail: string;
+  clientCompany: string | null;
+  projectName: string | null;
+  lang: 'en' | 'ar';
+  validationError: string | null;
+};
+
+export type ImportPreview = { rows: FeedbackImportRow[]; totalRows: number };
+export type ImportApplyResult = {
+  created: number;
+  sent: number;
+  skipped: number;
+  errors: string[];
 };

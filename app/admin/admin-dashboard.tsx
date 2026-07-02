@@ -1,7 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { api, type AdminCreateBody, type AdminFeedback } from '@/lib/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  api,
+  type AdminCreateBody,
+  type AdminFeedback,
+  type FeedbackImportRow,
+  type ImportApplyResult,
+  type ImportPreview,
+} from '@/lib/api';
 
 type Summary = {
   total: number;
@@ -17,6 +24,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [applyResult, setApplyResult] = useState<ImportApplyResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -52,6 +62,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFileChosen = async (file: File) => {
+    setBusy(true);
+    try {
+      const p = await api.admin.importPreview(file);
+      setPreview(p);
+      setApplyResult(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'unknown error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleApplyImport = async (rows: FeedbackImportRow[], autoSend: boolean) => {
+    setBusy(true);
+    try {
+      const result = await api.admin.importApply(rows, autoSend);
+      setApplyResult(result);
+      setPreview(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'unknown error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleAction = async (
     id: string,
     action: 'send' | 'resend' | 'close',
@@ -78,13 +115,40 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-2xl font-semibold">Admin</h1>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-full bg-white text-ink-950 font-medium px-5 py-2 hover:bg-ink-100 transition-colors"
-        >
-          {showForm ? 'Cancel' : '+ New request'}
-        </button>
+        <div className="flex gap-2">
+          <a
+            href={api.admin.exportXlsxUrl()}
+            className="rounded-full border border-ink-700 text-ink-100 px-4 py-2 hover:bg-ink-800 text-sm"
+          >
+            Export xlsx
+          </a>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            className="rounded-full border border-ink-700 text-ink-100 px-4 py-2 hover:bg-ink-800 text-sm disabled:opacity-40"
+          >
+            Import xlsx
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFileChosen(f);
+              e.target.value = '';
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-full bg-white text-ink-950 font-medium px-5 py-2 hover:bg-ink-100 transition-colors"
+          >
+            {showForm ? 'Cancel' : '+ New request'}
+          </button>
+        </div>
       </header>
 
       {error && (
@@ -99,6 +163,31 @@ export default function AdminDashboard() {
         <CreateForm
           onCancel={() => setShowForm(false)}
           onSubmit={handleCreate}
+          busy={busy}
+        />
+      )}
+
+      {applyResult && (
+        <div className="mb-6 rounded-lg border border-green-800 bg-green-950/30 text-green-200 p-3 text-sm">
+          Imported {applyResult.created} · Sent {applyResult.sent} · Skipped {applyResult.skipped}
+          {applyResult.errors.length > 0 && (
+            <div className="mt-2 text-xs text-yellow-300">
+              {applyResult.errors.slice(0, 5).map((e, i) => (
+                <div key={i}>· {e}</div>
+              ))}
+              {applyResult.errors.length > 5 && (
+                <div>· +{applyResult.errors.length - 5} more</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {preview && (
+        <ImportPreviewPanel
+          preview={preview}
+          onCancel={() => setPreview(null)}
+          onApply={(autoSend) => void handleApplyImport(preview.rows, autoSend)}
           busy={busy}
         />
       )}
@@ -294,6 +383,7 @@ function FeedbackTable({
             <th className="text-start p-3">Project</th>
             <th className="text-start p-3">Status</th>
             <th className="text-start p-3">Rating</th>
+            <th className="text-start p-3">Opens</th>
             <th className="text-start p-3">Sent</th>
             <th className="text-end p-3">Actions</th>
           </tr>
@@ -317,6 +407,20 @@ function FeedbackTable({
               </td>
               <td className="p-3 text-ink-300">
                 {it.rating !== null ? `${it.rating} ★` : '—'}
+              </td>
+              <td className="p-3 text-ink-300 text-xs">
+                {it.emailOpenCount > 0 ? (
+                  <span>
+                    {it.emailOpenCount}× ·{' '}
+                    <span className="text-ink-500">
+                      {it.emailOpenedAt
+                        ? new Date(it.emailOpenedAt).toLocaleDateString()
+                        : ''}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-ink-600">—</span>
+                )}
               </td>
               <td className="p-3 text-ink-500 text-xs">
                 {it.sentAt ? new Date(it.sentAt).toLocaleDateString() : '—'}
@@ -362,6 +466,87 @@ function FeedbackTable({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function ImportPreviewPanel({
+  preview,
+  onCancel,
+  onApply,
+  busy,
+}: {
+  preview: ImportPreview;
+  onCancel: () => void;
+  onApply: (autoSend: boolean) => void;
+  busy: boolean;
+}) {
+  const good = preview.rows.filter((r) => !r.validationError).length;
+  const bad = preview.rows.length - good;
+  return (
+    <div className="mb-6 rounded-2xl border border-ink-800 bg-ink-900 p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold">Import preview</h2>
+        <div className="text-sm text-ink-400">
+          {good} ready · {bad} with errors
+        </div>
+      </div>
+      <div className="max-h-64 overflow-y-auto text-sm border border-ink-800 rounded-lg">
+        <table className="w-full text-xs">
+          <thead className="bg-ink-950 text-ink-500 uppercase tracking-widest">
+            <tr>
+              <th className="text-start p-2">#</th>
+              <th className="text-start p-2">Name</th>
+              <th className="text-start p-2">Email</th>
+              <th className="text-start p-2">Company</th>
+              <th className="text-start p-2">Project</th>
+              <th className="text-start p-2">Lang</th>
+              <th className="text-start p-2">Issue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {preview.rows.map((r) => (
+              <tr
+                key={r.index}
+                className={r.validationError ? 'bg-red-950/30 text-red-200' : ''}
+              >
+                <td className="p-2">{r.index}</td>
+                <td className="p-2">{r.clientName}</td>
+                <td className="p-2">{r.clientEmail}</td>
+                <td className="p-2">{r.clientCompany ?? '—'}</td>
+                <td className="p-2">{r.projectName ?? '—'}</td>
+                <td className="p-2">{r.lang}</td>
+                <td className="p-2">{r.validationError ?? ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex justify-end gap-3 mt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={busy || good === 0}
+          onClick={() => onApply(false)}
+          className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800 disabled:opacity-40"
+        >
+          Save as drafts
+        </button>
+        <button
+          type="button"
+          disabled={busy || good === 0}
+          onClick={() => onApply(true)}
+          className="rounded-full px-5 py-2 bg-white text-ink-950 font-medium hover:bg-ink-100 disabled:opacity-40"
+        >
+          Save &amp; send all
+        </button>
+      </div>
     </div>
   );
 }
