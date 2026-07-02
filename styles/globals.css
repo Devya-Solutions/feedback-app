@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sora: 'Sora', system-ui, sans-serif;
+  }
+  html,
+  body {
+    background: #08090b;
+    color: #f5f5f5;
+    font-family: var(--font-sora);
+  }
+}
