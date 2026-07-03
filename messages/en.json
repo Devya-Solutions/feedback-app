@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Devya Feedback",
+    "description": "Share your honest take on working with Devya Solutions. Independent, verified feedback that shapes how we hire and how future teams find us."
+  },
+  "shell": {
+    "brandTag": "Devya Feedback",
+    "clientBrandTag": "Devya Solutions · Client Feedback",
+    "adminBrandTag": "Devya Feedback",
+    "toggleAria": "Switch language"
+  },
+  "home": {
+    "kicker": "Devya Feedback",
+    "headline": "You’ll normally reach this page via a personal link from Ahmed.",
+    "bodyBefore": "If you’re a Devya team member, head to the admin dashboard. Otherwise reach out at",
+    "bodyAfter": ".",
+    "cta": "Admin dashboard"
+  },
+  "client": {
+    "hi": "Hi",
+    "loading": "Loading…",
+    "errorTitle": "Something went wrong",
+    "linkExpired": "This feedback link has expired or been closed.",
+    "contactUs": "Reach out at contact@devya.dev if you believe this is a mistake.",
+    "ratingHeadline": "How did we do?",
+    "ratingSubline": "Your honest take shapes how we work with the next client — and helps future teams decide whether to hire us.",
+    "scaleLow": "1 = disappointed",
+    "scaleHigh": "5 = delighted",
+    "starsAria": "{n} stars",
+    "submitRating": "Submit rating",
+    "thanksHigh": "That means a lot — thank you.",
+    "pickPlatform": "Pick a platform to leave your public review",
+    "pickPlatformSubline": "Choose whichever you already have an account on. All are third-party verified — we don’t see or edit anything you write.",
+    "profileComingSoon": "Profile coming soon",
+    "visitProfile": "Open profile",
+    "thanksLow": "Thank you for the honest feedback.",
+    "privateFormHead": "Tell us what went wrong",
+    "privateFormSubline": "Your reply goes straight to Ahmed’s inbox — it’s not published anywhere and you’ll hear back within 24 hours.",
+    "privatePlaceholder": "What could we have done better?",
+    "submitPrivate": "Send private feedback",
+    "privateSubmitted": "Got it — you should hear from Ahmed within a day.",
+    "done": "You can close this tab."
+  },
+  "admin": {
+    "kicker": "Devya Feedback",
+    "title": "Admin",
+    "exportXlsx": "Export xlsx",
+    "importXlsx": "Import xlsx",
+    "newRequest": "+ New request",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "emptyState": "No feedback requests yet. Create one above.",
+    "stats": {
+      "totalRequests": "Total requests",
+      "responded": "Responded",
+      "averageRating": "Average rating",
+      "awaitingReply": "Awaiting reply"
+    },
+    "form": {
+      "clientName": "Client name",
+      "clientEmail": "Client email",
+      "clientCompany": "Company (optional)",
+      "projectName": "Project (optional)",
+      "emailLanguage": "Email language",
+      "langEn": "English",
+      "langAr": "العربية",
+      "saveDraft": "Save draft",
+      "saveAndSend": "Save & send"
+    },
+    "table": {
+      "client": "Client",
+      "project": "Project",
+      "status": "Status",
+      "rating": "Rating",
+      "opens": "Opens",
+      "sent": "Sent",
+      "actions": "Actions",
+      "reminderSuffix": "reminder(s)",
+      "opensSuffix": "×",
+      "sendAction": "Send",
+      "resendAction": "Resend",
+      "closeAction": "Close"
+    },
+    "import": {
+      "title": "Import preview",
+      "ready": "ready",
+      "withErrors": "with errors",
+      "colIndex": "#",
+      "colName": "Name",
+      "colEmail": "Email",
+      "colCompany": "Company",
+      "colProject": "Project",
+      "colLang": "Lang",
+      "colIssue": "Issue",
+      "cancel": "Cancel",
+      "saveAsDrafts": "Save as drafts",
+      "saveAndSendAll": "Save & send all",
+      "result": {
+        "importedPrefix": "Imported",
+        "sent": "Sent",
+        "skipped": "Skipped",
+        "moreErrorsPrefix": "+",
+        "moreErrorsSuffix": "more"
+      }
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "OPENED": "Opened",
+      "RESPONDED": "Responded",
+      "REMINDER_SENT": "Reminder sent",
+      "CLOSED": "Closed"
+    }
+  }
+}

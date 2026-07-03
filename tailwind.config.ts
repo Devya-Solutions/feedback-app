@@ -15,6 +15,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sora: ['var(--font-sora)', 'system-ui', 'sans-serif'],
+        cairo: ['var(--font-cairo)', 'system-ui', 'sans-serif'],
       },
       colors: {
         ink: {

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, type PublicFeedback } from '@/lib/api';
 import { REVIEW_PLATFORMS } from '@/lib/platforms';
-import { t, type Lang } from '@/lib/i18n';
+import { useT, useLocale, useSetLocale } from '@/lib/i18n/client';
+import { LocaleToggle } from '@/components/ui/locale-toggle';
 
 type Stage = 'loading' | 'error' | 'rating' | 'high' | 'low' | 'done';
 
@@ -13,6 +14,10 @@ export default function FeedbackFlow({ token }: { token: string }) {
   const [stage, setStage] = useState<Stage>('loading');
   const [data, setData] = useState<PublicFeedback | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [seededFromBackend, setSeededFromBackend] = useState(false);
+
+  const locale = useLocale();
+  const setLocale = useSetLocale();
 
   useEffect(() => {
     let cancelled = false;
@@ -21,6 +26,14 @@ export default function FeedbackFlow({ token }: { token: string }) {
       .then((res) => {
         if (cancelled) return;
         setData(res);
+        // If the client hasn't explicitly picked a language yet (cookie was
+        // default 'en') but the backend has recorded their preferred lang as
+        // 'ar', mirror that so the form matches how the outreach email
+        // addressed them. Only seed once — after that the LocaleToggle wins.
+        if (!seededFromBackend && res.lang === 'ar' && locale === 'en') {
+          setLocale('ar');
+        }
+        setSeededFromBackend(true);
         if (res.hasResponded) {
           setStage('done');
         } else if (res.rating === null || res.rating === undefined) {
@@ -39,9 +52,10 @@ export default function FeedbackFlow({ token }: { token: string }) {
     return () => {
       cancelled = true;
     };
+    // We intentionally only run this once per token — locale/setLocale changes
+    // must not re-trigger the network round trip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
-  const lang: Lang = (data?.lang as Lang) ?? 'en';
 
   const handleRatingSubmit = async (rating: number) => {
     setStage('loading');
@@ -77,61 +91,56 @@ export default function FeedbackFlow({ token }: { token: string }) {
   };
 
   return (
-    <main
-      dir={lang === 'ar' ? 'rtl' : 'ltr'}
-      className="min-h-screen flex items-center justify-center px-6 py-16"
-    >
+    <main className="min-h-screen flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-xl animate-fade-in">
-        <Header lang={lang} clientName={data?.clientName} />
+        <Header clientName={data?.clientName} />
 
-        {stage === 'loading' && (
-          <div className="text-ink-300 mt-8">{t(lang, 'loading')}</div>
-        )}
-        {stage === 'error' && (
-          <ErrorPanel lang={lang} message={error ?? ''} />
-        )}
-        {stage === 'rating' && (
-          <RatingPanel lang={lang} onSubmit={handleRatingSubmit} />
-        )}
+        {stage === 'loading' && <LoadingLine />}
+        {stage === 'error' && <ErrorPanel message={error ?? ''} />}
+        {stage === 'rating' && <RatingPanel onSubmit={handleRatingSubmit} />}
         {stage === 'high' && (
-          <HighRatingPanel
-            lang={lang}
-            onPick={(p, u) => void handlePlatformClick(p, u)}
-          />
+          <HighRatingPanel onPick={(p, u) => void handlePlatformClick(p, u)} />
         )}
         {stage === 'low' && (
-          <PrivateFeedbackPanel
-            lang={lang}
-            onSubmit={(b) => void handlePrivateSubmit(b)}
-          />
+          <PrivateFeedbackPanel onSubmit={(b) => void handlePrivateSubmit(b)} />
         )}
-        {stage === 'done' && <DonePanel lang={lang} rating={data?.rating ?? null} />}
+        {stage === 'done' && <DonePanel rating={data?.rating ?? null} />}
       </div>
     </main>
   );
 }
 
-function Header({ lang, clientName }: { lang: Lang; clientName?: string }) {
+function Header({ clientName }: { clientName?: string }) {
+  const t = useT();
   return (
-    <div>
-      <div className="text-xs uppercase tracking-widest text-ink-400 mb-3">
-        Devya Solutions · Client Feedback
-      </div>
-      {clientName && (
-        <div className="text-ink-300 text-sm mb-2">
-          {t(lang, 'hi')}, {clientName.split(' ')[0]}
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <div className="text-xs uppercase tracking-widest text-ink-400 mb-3">
+          {t('shell.clientBrandTag')}
         </div>
-      )}
+        {clientName && (
+          <div className="text-ink-300 text-sm mb-2">
+            {t('client.hi')}, {clientName.split(' ')[0]}
+          </div>
+        )}
+      </div>
+      <LocaleToggle />
     </div>
   );
 }
 
-function ErrorPanel({ lang, message }: { lang: Lang; message: string }) {
+function LoadingLine() {
+  const t = useT();
+  return <div className="text-ink-300 mt-8">{t('client.loading')}</div>;
+}
+
+function ErrorPanel({ message }: { message: string }) {
+  const t = useT();
   return (
     <div className="mt-8">
-      <h1 className="text-2xl font-semibold mb-3">{t(lang, 'errorTitle')}</h1>
-      <p className="text-ink-300 mb-2">{t(lang, 'linkExpired')}</p>
-      <p className="text-ink-400 text-sm">{t(lang, 'contactUs')}</p>
+      <h1 className="text-2xl font-semibold mb-3">{t('client.errorTitle')}</h1>
+      <p className="text-ink-300 mb-2">{t('client.linkExpired')}</p>
+      <p className="text-ink-400 text-sm">{t('client.contactUs')}</p>
       {message && (
         <p className="text-ink-500 text-xs mt-6 font-mono">{message}</p>
       )}
@@ -139,27 +148,22 @@ function ErrorPanel({ lang, message }: { lang: Lang; message: string }) {
   );
 }
 
-function RatingPanel({
-  lang,
-  onSubmit,
-}: {
-  lang: Lang;
-  onSubmit: (rating: number) => void;
-}) {
+function RatingPanel({ onSubmit }: { onSubmit: (rating: number) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const t = useT();
   return (
     <div className="mt-6">
       <h1 className="text-3xl font-semibold mb-4 leading-tight">
-        {t(lang, 'ratingHeadline')}
+        {t('client.ratingHeadline')}
       </h1>
-      <p className="text-ink-300 mb-8">{t(lang, 'ratingSubline')}</p>
+      <p className="text-ink-300 mb-8">{t('client.ratingSubline')}</p>
 
       <div className="flex justify-center gap-3 mb-6">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
-            aria-label={`${n} stars`}
+            aria-label={t('client.starsAria').replace('{n}', String(n))}
             onClick={() => setSelected(n)}
             className={`w-16 h-16 rounded-full border transition-all text-2xl font-semibold ${
               selected !== null && n <= selected
@@ -172,8 +176,8 @@ function RatingPanel({
         ))}
       </div>
       <div className="flex justify-between text-xs text-ink-500 mb-8">
-        <span>{t(lang, 'scaleLow')}</span>
-        <span>{t(lang, 'scaleHigh')}</span>
+        <span>{t('client.scaleLow')}</span>
+        <span>{t('client.scaleHigh')}</span>
       </div>
       <button
         type="button"
@@ -181,32 +185,31 @@ function RatingPanel({
         onClick={() => selected !== null && onSubmit(selected)}
         className="w-full rounded-full bg-white text-ink-950 font-medium px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink-100 transition-colors"
       >
-        {t(lang, 'submitRating')}
+        {t('client.submitRating')}
       </button>
     </div>
   );
 }
 
 function HighRatingPanel({
-  lang,
   onPick,
 }: {
-  lang: Lang;
   onPick: (platformKey: string, url: string) => void;
 }) {
+  const t = useT();
   const claimed = useMemo(() => REVIEW_PLATFORMS.filter((p) => p.url), []);
   const showPlaceholders = claimed.length === 0;
   return (
     <div className="mt-6">
       <div className="text-yellow-400 text-2xl mb-3">★★★★★</div>
       <h1 className="text-3xl font-semibold mb-3 leading-tight">
-        {t(lang, 'thanksHigh')}
+        {t('client.thanksHigh')}
       </h1>
       <h2 className="text-lg text-ink-100 mt-8 mb-2">
-        {t(lang, 'pickPlatform')}
+        {t('client.pickPlatform')}
       </h2>
       <p className="text-ink-400 text-sm mb-6">
-        {t(lang, 'pickPlatformSubline')}
+        {t('client.pickPlatformSubline')}
       </p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -228,7 +231,9 @@ function HighRatingPanel({
                 {p.name}
               </div>
               <div className="text-xs text-ink-500 mt-1">
-                {disabled ? t(lang, 'profileComingSoon') : t(lang, 'visitProfile') + ' ↗'}
+                {disabled
+                  ? t('client.profileComingSoon')
+                  : t('client.visitProfile') + ' ↗'}
               </div>
             </button>
           );
@@ -239,23 +244,22 @@ function HighRatingPanel({
 }
 
 function PrivateFeedbackPanel({
-  lang,
   onSubmit,
 }: {
-  lang: Lang;
   onSubmit: (body: string) => void;
 }) {
   const [body, setBody] = useState('');
+  const t = useT();
   return (
     <div className="mt-6">
       <h1 className="text-3xl font-semibold mb-3 leading-tight">
-        {t(lang, 'privateFormHead')}
+        {t('client.privateFormHead')}
       </h1>
-      <p className="text-ink-300 mb-6">{t(lang, 'privateFormSubline')}</p>
+      <p className="text-ink-300 mb-6">{t('client.privateFormSubline')}</p>
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={t(lang, 'privatePlaceholder')}
+        placeholder={t('client.privatePlaceholder')}
         maxLength={4000}
         rows={8}
         className="w-full rounded-2xl bg-ink-900 border border-ink-700 p-4 text-ink-100 placeholder-ink-500 focus:outline-none focus:border-ink-500 mb-6"
@@ -266,20 +270,21 @@ function PrivateFeedbackPanel({
         onClick={() => onSubmit(body.trim())}
         className="w-full rounded-full bg-white text-ink-950 font-medium px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink-100 transition-colors"
       >
-        {t(lang, 'submitPrivate')}
+        {t('client.submitPrivate')}
       </button>
     </div>
   );
 }
 
-function DonePanel({ lang, rating }: { lang: Lang; rating: number | null }) {
+function DonePanel({ rating }: { rating: number | null }) {
+  const t = useT();
   const high = (rating ?? 0) >= RATING_HIGH_THRESHOLD;
   return (
     <div className="mt-8">
       <h1 className="text-3xl font-semibold mb-3 leading-tight">
-        {high ? t(lang, 'thanksHigh') : t(lang, 'privateSubmitted')}
+        {high ? t('client.thanksHigh') : t('client.privateSubmitted')}
       </h1>
-      <p className="text-ink-400">{t(lang, 'done')}</p>
+      <p className="text-ink-400">{t('client.done')}</p>
     </div>
   );
 }

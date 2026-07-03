@@ -9,6 +9,8 @@ import {
   type ImportApplyResult,
   type ImportPreview,
 } from '@/lib/api';
+import { useT } from '@/lib/i18n/client';
+import { LocaleToggle } from '@/components/ui/locale-toggle';
 
 type Summary = {
   total: number;
@@ -19,6 +21,7 @@ type Summary = {
 };
 
 export default function AdminDashboard() {
+  const t = useT();
   const [items, setItems] = useState<AdminFeedback[] | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -108,19 +111,20 @@ export default function AdminDashboard() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-6xl mx-auto">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-8 gap-4">
         <div>
           <div className="text-xs uppercase tracking-widest text-ink-400 mb-1">
-            Devya Feedback
+            {t('admin.kicker')}
           </div>
-          <h1 className="text-2xl font-semibold">Admin</h1>
+          <h1 className="text-2xl font-semibold">{t('admin.title')}</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center flex-wrap">
+          <LocaleToggle />
           <a
             href={api.admin.exportXlsxUrl()}
             className="rounded-full border border-ink-700 text-ink-100 px-4 py-2 hover:bg-ink-800 text-sm"
           >
-            Export xlsx
+            {t('admin.exportXlsx')}
           </a>
           <button
             type="button"
@@ -128,7 +132,7 @@ export default function AdminDashboard() {
             disabled={busy}
             className="rounded-full border border-ink-700 text-ink-100 px-4 py-2 hover:bg-ink-800 text-sm disabled:opacity-40"
           >
-            Import xlsx
+            {t('admin.importXlsx')}
           </button>
           <input
             ref={fileInputRef}
@@ -146,7 +150,7 @@ export default function AdminDashboard() {
             onClick={() => setShowForm((v) => !v)}
             className="rounded-full bg-white text-ink-950 font-medium px-5 py-2 hover:bg-ink-100 transition-colors"
           >
-            {showForm ? 'Cancel' : '+ New request'}
+            {showForm ? t('admin.cancel') : t('admin.newRequest')}
           </button>
         </div>
       </header>
@@ -169,14 +173,20 @@ export default function AdminDashboard() {
 
       {applyResult && (
         <div className="mb-6 rounded-lg border border-green-800 bg-green-950/30 text-green-200 p-3 text-sm">
-          Imported {applyResult.created} · Sent {applyResult.sent} · Skipped {applyResult.skipped}
+          {t('admin.import.result.importedPrefix')} {applyResult.created} ·{' '}
+          {t('admin.import.result.sent')} {applyResult.sent} ·{' '}
+          {t('admin.import.result.skipped')} {applyResult.skipped}
           {applyResult.errors.length > 0 && (
             <div className="mt-2 text-xs text-yellow-300">
               {applyResult.errors.slice(0, 5).map((e, i) => (
                 <div key={i}>· {e}</div>
               ))}
               {applyResult.errors.length > 5 && (
-                <div>· +{applyResult.errors.length - 5} more</div>
+                <div>
+                  · {t('admin.import.result.moreErrorsPrefix')}
+                  {applyResult.errors.length - 5}{' '}
+                  {t('admin.import.result.moreErrorsSuffix')}
+                </div>
               )}
             </div>
           )}
@@ -202,16 +212,20 @@ export default function AdminDashboard() {
 }
 
 function SummaryStrip({ s }: { s: Summary }) {
+  const t = useT();
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-      <Stat label="Total requests" value={s.total} />
-      <Stat label="Responded" value={`${s.responded} (${s.responseRate}%)`} />
+      <Stat label={t('admin.stats.totalRequests')} value={s.total} />
       <Stat
-        label="Average rating"
+        label={t('admin.stats.responded')}
+        value={`${s.responded} (${s.responseRate}%)`}
+      />
+      <Stat
+        label={t('admin.stats.averageRating')}
         value={s.averageRating ? s.averageRating.toFixed(2) : '—'}
       />
       <Stat
-        label="Awaiting reply"
+        label={t('admin.stats.awaitingReply')}
         value={
           (s.byStatus.SENT ?? 0) +
           (s.byStatus.OPENED ?? 0) +
@@ -242,6 +256,7 @@ function CreateForm({
   onSubmit: (body: AdminCreateBody, andSend: boolean) => void;
   busy: boolean;
 }) {
+  const t = useT();
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientCompany, setClientCompany] = useState('');
@@ -270,37 +285,37 @@ function CreateForm({
       className="rounded-2xl border border-ink-800 bg-ink-900 p-5 mb-8 grid gap-4 md:grid-cols-2"
     >
       <Field
-        label="Client name"
+        label={t('admin.form.clientName')}
         value={clientName}
         onChange={setClientName}
         required
       />
       <Field
-        label="Client email"
+        label={t('admin.form.clientEmail')}
         type="email"
         value={clientEmail}
         onChange={setClientEmail}
         required
       />
       <Field
-        label="Company (optional)"
+        label={t('admin.form.clientCompany')}
         value={clientCompany}
         onChange={setClientCompany}
       />
       <Field
-        label="Project (optional)"
+        label={t('admin.form.projectName')}
         value={projectName}
         onChange={setProjectName}
       />
       <label className="text-sm">
-        <div className="text-ink-400 mb-1">Email language</div>
+        <div className="text-ink-400 mb-1">{t('admin.form.emailLanguage')}</div>
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as 'en' | 'ar')}
           className="w-full rounded-md bg-ink-950 border border-ink-700 p-2 text-ink-100"
         >
-          <option value="en">English</option>
-          <option value="ar">العربية</option>
+          <option value="en">{t('admin.form.langEn')}</option>
+          <option value="ar">{t('admin.form.langAr')}</option>
         </select>
       </label>
       <div className="md:col-span-2 flex gap-3 justify-end">
@@ -309,7 +324,7 @@ function CreateForm({
           onClick={onCancel}
           className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800"
         >
-          Cancel
+          {t('admin.cancel')}
         </button>
         <button
           type="button"
@@ -317,14 +332,14 @@ function CreateForm({
           disabled={busy || !clientName || !clientEmail}
           className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800 disabled:opacity-40"
         >
-          Save draft
+          {t('admin.form.saveDraft')}
         </button>
         <button
           type="submit"
           disabled={busy || !clientName || !clientEmail}
           className="rounded-full px-5 py-2 bg-white text-ink-950 font-medium hover:bg-ink-100 disabled:opacity-40"
         >
-          Save &amp; send
+          {t('admin.form.saveAndSend')}
         </button>
       </div>
     </form>
@@ -367,25 +382,22 @@ function FeedbackTable({
   onAction: (id: string, action: 'send' | 'resend' | 'close') => void;
   busy: boolean;
 }) {
-  if (items === null) return <div className="text-ink-400">Loading…</div>;
+  const t = useT();
+  if (items === null) return <div className="text-ink-400">{t('admin.loading')}</div>;
   if (items.length === 0)
-    return (
-      <div className="text-ink-400">
-        No feedback requests yet. Create one above.
-      </div>
-    );
+    return <div className="text-ink-400">{t('admin.emptyState')}</div>;
   return (
     <div className="rounded-2xl border border-ink-800 bg-ink-900 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-ink-950 text-ink-500 uppercase text-xs tracking-widest">
           <tr>
-            <th className="text-start p-3">Client</th>
-            <th className="text-start p-3">Project</th>
-            <th className="text-start p-3">Status</th>
-            <th className="text-start p-3">Rating</th>
-            <th className="text-start p-3">Opens</th>
-            <th className="text-start p-3">Sent</th>
-            <th className="text-end p-3">Actions</th>
+            <th className="text-start p-3">{t('admin.table.client')}</th>
+            <th className="text-start p-3">{t('admin.table.project')}</th>
+            <th className="text-start p-3">{t('admin.table.status')}</th>
+            <th className="text-start p-3">{t('admin.table.rating')}</th>
+            <th className="text-start p-3">{t('admin.table.opens')}</th>
+            <th className="text-start p-3">{t('admin.table.sent')}</th>
+            <th className="text-end p-3">{t('admin.table.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -411,7 +423,8 @@ function FeedbackTable({
               <td className="p-3 text-ink-300 text-xs">
                 {it.emailOpenCount > 0 ? (
                   <span>
-                    {it.emailOpenCount}× ·{' '}
+                    {it.emailOpenCount}
+                    {t('admin.table.opensSuffix')} ·{' '}
                     <span className="text-ink-500">
                       {it.emailOpenedAt
                         ? new Date(it.emailOpenedAt).toLocaleDateString()
@@ -425,7 +438,9 @@ function FeedbackTable({
               <td className="p-3 text-ink-500 text-xs">
                 {it.sentAt ? new Date(it.sentAt).toLocaleDateString() : '—'}
                 {it.reminderCount > 0 && (
-                  <div>+{it.reminderCount} reminder(s)</div>
+                  <div>
+                    +{it.reminderCount} {t('admin.table.reminderSuffix')}
+                  </div>
                 )}
               </td>
               <td className="p-3 text-end">
@@ -437,7 +452,7 @@ function FeedbackTable({
                       onClick={() => onAction(it.id, 'send')}
                       className="rounded-full px-3 py-1 bg-white text-ink-950 text-xs font-medium hover:bg-ink-100 disabled:opacity-40"
                     >
-                      Send
+                      {t('admin.table.sendAction')}
                     </button>
                   )}
                   {['SENT', 'OPENED', 'REMINDER_SENT'].includes(it.status) && (
@@ -447,7 +462,7 @@ function FeedbackTable({
                       onClick={() => onAction(it.id, 'resend')}
                       className="rounded-full px-3 py-1 border border-ink-700 text-xs hover:bg-ink-800 disabled:opacity-40"
                     >
-                      Resend
+                      {t('admin.table.resendAction')}
                     </button>
                   )}
                   {it.status !== 'CLOSED' && (
@@ -457,7 +472,7 @@ function FeedbackTable({
                       onClick={() => onAction(it.id, 'close')}
                       className="rounded-full px-3 py-1 border border-ink-700 text-xs hover:bg-ink-800 disabled:opacity-40"
                     >
-                      Close
+                      {t('admin.table.closeAction')}
                     </button>
                   )}
                 </div>
@@ -481,27 +496,28 @@ function ImportPreviewPanel({
   onApply: (autoSend: boolean) => void;
   busy: boolean;
 }) {
+  const t = useT();
   const good = preview.rows.filter((r) => !r.validationError).length;
   const bad = preview.rows.length - good;
   return (
     <div className="mb-6 rounded-2xl border border-ink-800 bg-ink-900 p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">Import preview</h2>
+        <h2 className="text-lg font-semibold">{t('admin.import.title')}</h2>
         <div className="text-sm text-ink-400">
-          {good} ready · {bad} with errors
+          {good} {t('admin.import.ready')} · {bad} {t('admin.import.withErrors')}
         </div>
       </div>
       <div className="max-h-64 overflow-y-auto text-sm border border-ink-800 rounded-lg">
         <table className="w-full text-xs">
           <thead className="bg-ink-950 text-ink-500 uppercase tracking-widest">
             <tr>
-              <th className="text-start p-2">#</th>
-              <th className="text-start p-2">Name</th>
-              <th className="text-start p-2">Email</th>
-              <th className="text-start p-2">Company</th>
-              <th className="text-start p-2">Project</th>
-              <th className="text-start p-2">Lang</th>
-              <th className="text-start p-2">Issue</th>
+              <th className="text-start p-2">{t('admin.import.colIndex')}</th>
+              <th className="text-start p-2">{t('admin.import.colName')}</th>
+              <th className="text-start p-2">{t('admin.import.colEmail')}</th>
+              <th className="text-start p-2">{t('admin.import.colCompany')}</th>
+              <th className="text-start p-2">{t('admin.import.colProject')}</th>
+              <th className="text-start p-2">{t('admin.import.colLang')}</th>
+              <th className="text-start p-2">{t('admin.import.colIssue')}</th>
             </tr>
           </thead>
           <tbody>
@@ -528,7 +544,7 @@ function ImportPreviewPanel({
           onClick={onCancel}
           className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800"
         >
-          Cancel
+          {t('admin.import.cancel')}
         </button>
         <button
           type="button"
@@ -536,7 +552,7 @@ function ImportPreviewPanel({
           onClick={() => onApply(false)}
           className="rounded-full px-5 py-2 border border-ink-700 hover:bg-ink-800 disabled:opacity-40"
         >
-          Save as drafts
+          {t('admin.import.saveAsDrafts')}
         </button>
         <button
           type="button"
@@ -544,7 +560,7 @@ function ImportPreviewPanel({
           onClick={() => onApply(true)}
           className="rounded-full px-5 py-2 bg-white text-ink-950 font-medium hover:bg-ink-100 disabled:opacity-40"
         >
-          Save &amp; send all
+          {t('admin.import.saveAndSendAll')}
         </button>
       </div>
     </div>
@@ -552,6 +568,7 @@ function ImportPreviewPanel({
 }
 
 function StatusPill({ status }: { status: string }) {
+  const t = useT();
   const map: Record<string, string> = {
     DRAFT: 'bg-ink-800 text-ink-300',
     SENT: 'bg-blue-950 text-blue-300',
@@ -560,13 +577,14 @@ function StatusPill({ status }: { status: string }) {
     REMINDER_SENT: 'bg-orange-950 text-orange-300',
     CLOSED: 'bg-ink-800 text-ink-500',
   };
+  const label = t(`admin.status.${status}`);
   return (
     <span
       className={`inline-block rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-widest ${
         map[status] ?? 'bg-ink-800 text-ink-300'
       }`}
     >
-      {status}
+      {label}
     </span>
   );
 }

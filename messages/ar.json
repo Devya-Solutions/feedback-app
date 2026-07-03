@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "ملاحظات ديفيا",
+    "description": "شاركنا رأيك الصريح في تجربتك مع ديفيا سوليوشنز. ملاحظات موثّقة ومستقلة تُشكّل طريقة عملنا وتساعد الفرق المقبلة في اختيارنا."
+  },
+  "shell": {
+    "brandTag": "ملاحظات ديفيا",
+    "clientBrandTag": "ديفيا سوليوشنز · ملاحظات العميل",
+    "adminBrandTag": "ملاحظات ديفيا",
+    "toggleAria": "تبديل اللغة"
+  },
+  "home": {
+    "kicker": "ملاحظات ديفيا",
+    "headline": "عادةً بتوصل للصفحة دي عن طريق رابط شخصي من أحمد.",
+    "bodyBefore": "لو من فريق ديفيا، ادخل على لوحة الإدارة. غير كده، تواصل معانا على",
+    "bodyAfter": ".",
+    "cta": "لوحة الإدارة"
+  },
+  "client": {
+    "hi": "أهلًا",
+    "loading": "جارٍ التحميل…",
+    "errorTitle": "حصلت مشكلة",
+    "linkExpired": "الرابط ده منتهي أو تم إغلاقه.",
+    "contactUs": "تواصل معانا على contact@devya.dev لو تعتقد إن ده خطأ.",
+    "ratingHeadline": "إزاي كان شغلنا معاك؟",
+    "ratingSubline": "رأيك الصريح بيأثّر على طريقة تعاملنا مع العميل اللي بعديك، وبيساعد الفرق المقبلة تقرر لو هتشتغل معانا.",
+    "scaleLow": "١ = مش راضي",
+    "scaleHigh": "٥ = فوق التوقعات",
+    "starsAria": "{n} نجوم",
+    "submitRating": "إرسال التقييم",
+    "thanksHigh": "ده بيفرق معانا كتير — شكرًا ليك.",
+    "pickPlatform": "اختر المنصة اللي تحب تنشر عليها مراجعتك",
+    "pickPlatformSubline": "اختر أي منصة عندك عليها حساب. كلها موثّقة عن طريق طرف مستقل — إحنا مش شايفين ولا بنعدّل حاجة بتكتبها.",
+    "profileComingSoon": "الحساب هيتفتح قريبًا",
+    "visitProfile": "فتح الحساب",
+    "thanksLow": "شكرًا على رأيك الصريح.",
+    "privateFormHead": "قولنا اللي حصل بالظبط",
+    "privateFormSubline": "ردّك بيوصل مباشرة على إيميل أحمد — مش هيتنشر في أي مكان، وهيرد عليك خلال ٢٤ ساعة.",
+    "privatePlaceholder": "كنا نقدر نعمل إيه أحسن؟",
+    "submitPrivate": "إرسال الرأي الخاص",
+    "privateSubmitted": "وصلنا — هيوصلك رد من أحمد خلال يوم.",
+    "done": "تقدر تقفل الصفحة دي."
+  },
+  "admin": {
+    "kicker": "ملاحظات ديفيا",
+    "title": "الإدارة",
+    "exportXlsx": "تصدير xlsx",
+    "importXlsx": "استيراد xlsx",
+    "newRequest": "+ طلب جديد",
+    "cancel": "إلغاء",
+    "loading": "جارٍ التحميل…",
+    "emptyState": "لا توجد طلبات ملاحظات بعد. أنشئ طلبًا من الأعلى.",
+    "stats": {
+      "totalRequests": "إجمالي الطلبات",
+      "responded": "تم الرد",
+      "averageRating": "متوسط التقييم",
+      "awaitingReply": "بانتظار الرد"
+    },
+    "form": {
+      "clientName": "اسم العميل",
+      "clientEmail": "بريد العميل",
+      "clientCompany": "الشركة (اختياري)",
+      "projectName": "المشروع (اختياري)",
+      "emailLanguage": "لغة البريد",
+      "langEn": "English",
+      "langAr": "العربية",
+      "saveDraft": "حفظ كمسودة",
+      "saveAndSend": "حفظ وإرسال"
+    },
+    "table": {
+      "client": "العميل",
+      "project": "المشروع",
+      "status": "الحالة",
+      "rating": "التقييم",
+      "opens": "الفتح",
+      "sent": "الإرسال",
+      "actions": "الإجراءات",
+      "reminderSuffix": "تذكير",
+      "opensSuffix": "×",
+      "sendAction": "إرسال",
+      "resendAction": "إعادة الإرسال",
+      "closeAction": "إغلاق"
+    },
+    "import": {
+      "title": "معاينة الاستيراد",
+      "ready": "جاهز",
+      "withErrors": "بها أخطاء",
+      "colIndex": "#",
+      "colName": "الاسم",
+      "colEmail": "البريد",
+      "colCompany": "الشركة",
+      "colProject": "المشروع",
+      "colLang": "اللغة",
+      "colIssue": "الملاحظة",
+      "cancel": "إلغاء",
+      "saveAsDrafts": "حفظ كمسودات",
+      "saveAndSendAll": "حفظ وإرسال الكل",
+      "result": {
+        "importedPrefix": "تم استيراد",
+        "sent": "أُرسل",
+        "skipped": "تم تخطي",
+        "moreErrorsPrefix": "+",
+        "moreErrorsSuffix": "إضافية"
+      }
+    },
+    "status": {
+      "DRAFT": "مسودة",
+      "SENT": "تم الإرسال",
+      "OPENED": "تمّت المشاهدة",
+      "RESPONDED": "تم الرد",
+      "REMINDER_SENT": "تم التذكير",
+      "CLOSED": "مُغلق"
+    }
+  }
+}
