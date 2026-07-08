@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [applyResult, setApplyResult] = useState<ImportApplyResult | null>(null);
+  const [prefill, setPrefill] = useState<{ name: string; email: string; company: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(async () => {
@@ -48,6 +49,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Deep-link prefill: admin-app's client portfolio "Request review" button
+  // opens /admin?name=&email=&company= — auto-open the create form filled in.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const name = p.get('name') ?? '';
+    const email = p.get('email') ?? '';
+    const company = p.get('company') ?? '';
+    if (name || email) {
+      setPrefill({ name, email, company });
+      setShowForm(true);
+    }
+  }, []);
 
   const handleCreate = async (body: AdminCreateBody, andSend: boolean) => {
     setBusy(true);
@@ -168,6 +182,7 @@ export default function AdminDashboard() {
           onCancel={() => setShowForm(false)}
           onSubmit={handleCreate}
           busy={busy}
+          prefill={prefill}
         />
       )}
 
@@ -251,15 +266,17 @@ function CreateForm({
   onCancel,
   onSubmit,
   busy,
+  prefill,
 }: {
   onCancel: () => void;
   onSubmit: (body: AdminCreateBody, andSend: boolean) => void;
   busy: boolean;
+  prefill?: { name: string; email: string; company: string } | null;
 }) {
   const t = useT();
-  const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientCompany, setClientCompany] = useState('');
+  const [clientName, setClientName] = useState(prefill?.name ?? '');
+  const [clientEmail, setClientEmail] = useState(prefill?.email ?? '');
+  const [clientCompany, setClientCompany] = useState(prefill?.company ?? '');
   const [projectName, setProjectName] = useState('');
   const [lang, setLang] = useState<'en' | 'ar'>('en');
 
