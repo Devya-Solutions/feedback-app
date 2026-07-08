@@ -21,9 +21,11 @@ export function middleware(req: NextRequest) {
   const hasSession = Boolean(req.cookies.get(COOKIE_NAME)?.value);
   if (hasSession) return NextResponse.next();
 
-  // No session: redirect to the external admin login, preserving where they came from.
+  // No session: redirect to the external admin login, preserving where they came
+  // from — including the query string (?name=&email=&company= from the admin
+  // "Request review" deep link) so the prefill survives the round trip.
   const loginUrl = new URL(ADMIN_LOGIN_URL);
-  loginUrl.searchParams.set('from', req.nextUrl.origin + pathname);
+  loginUrl.searchParams.set('from', req.nextUrl.origin + pathname + req.nextUrl.search);
   return NextResponse.redirect(loginUrl);
 }
 
