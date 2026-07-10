@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, type PublicFeedback } from '@/lib/api';
 import { REVIEW_PLATFORMS } from '@/lib/platforms';
 import { useT, useLocale, useSetLocale } from '@/lib/i18n/client';
@@ -57,10 +57,26 @@ export default function FeedbackFlow({ token }: { token: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleRatingSubmit = async (rating: number) => {
+  const handleRatingSubmit = async (
+    rating: number,
+    note?: string,
+    image?: File | null,
+  ) => {
     setStage('loading');
     try {
-      await api.public.submitRating(token, rating);
+      let imageUrl: string | undefined;
+      if (image) {
+        try {
+          imageUrl = (await api.public.uploadImage(token, image)).url;
+        } catch {
+          // Photo is optional — a failed upload must not block the rating.
+          imageUrl = undefined;
+        }
+      }
+      await api.public.submitRating(token, rating, {
+        testimonial: note?.trim() || undefined,
+        imageUrl,
+      });
       setData((prev) => (prev ? { ...prev, rating } : prev));
       setStage(rating >= RATING_HIGH_THRESHOLD ? 'high' : 'low');
     } catch (err) {
@@ -148,9 +164,26 @@ function ErrorPanel({ message }: { message: string }) {
   );
 }
 
-function RatingPanel({ onSubmit }: { onSubmit: (rating: number) => void }) {
+function RatingPanel({
+  onSubmit,
+}: {
+  onSubmit: (rating: number, note?: string, image?: File | null) => void;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [note, setNote] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const t = useT();
+
+  const pickImage = (file: File | null) => {
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    setImage(file);
+  };
+
   return (
     <div className="mt-6">
       <h1 className="text-3xl font-semibold mb-4 leading-tight">
@@ -179,10 +212,57 @@ function RatingPanel({ onSubmit }: { onSubmit: (rating: number) => void }) {
         <span>{t('client.scaleLow')}</span>
         <span>{t('client.scaleHigh')}</span>
       </div>
+
+      {/* Optional testimonial + photo — collected alongside the stars. */}
+      <label className="block text-sm text-ink-300 mb-2">
+        {t('client.noteLabel')}
+      </label>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t('client.notePlaceholder')}
+        maxLength={4000}
+        rows={4}
+        className="w-full rounded-2xl bg-ink-900 border border-ink-700 p-4 text-ink-100 placeholder-ink-500 focus:outline-none focus:border-ink-500 mb-4"
+      />
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+      />
+      {preview ? (
+        <div className="flex items-center gap-3 mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview}
+            alt=""
+            className="h-16 w-16 rounded-xl object-cover border border-ink-700"
+          />
+          <button
+            type="button"
+            onClick={() => pickImage(null)}
+            className="text-sm text-ink-400 hover:text-ink-200 transition-colors"
+          >
+            {t('client.photoRemove')}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="w-full rounded-2xl border border-dashed border-ink-700 text-ink-400 px-4 py-3 mb-6 hover:border-ink-500 hover:text-ink-200 transition-colors"
+        >
+          {t('client.photoLabel')}
+        </button>
+      )}
+
       <button
         type="button"
         disabled={selected === null}
-        onClick={() => selected !== null && onSubmit(selected)}
+        onClick={() => selected !== null && onSubmit(selected, note, image)}
         className="w-full rounded-full bg-white text-ink-950 font-medium px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink-100 transition-colors"
       >
         {t('client.submitRating')}

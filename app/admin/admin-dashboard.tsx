@@ -434,8 +434,31 @@ function FeedbackTable({
               <td className="p-3">
                 <StatusPill status={it.status} />
               </td>
-              <td className="p-3 text-ink-300">
-                {it.rating !== null ? `${it.rating} ★` : '—'}
+              <td className="p-3 text-ink-300 align-top">
+                <div>{it.rating !== null ? `${it.rating} ★` : '—'}</div>
+                {it.testimonial && (
+                  <div
+                    className="mt-1 max-w-[220px] text-xs text-ink-400 line-clamp-3"
+                    title={it.testimonial}
+                  >
+                    “{it.testimonial}”
+                  </div>
+                )}
+                {it.imageUrl && (
+                  <a
+                    href={it.imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={it.imageUrl}
+                      alt=""
+                      className="h-12 w-12 rounded-lg object-cover border border-ink-700"
+                    />
+                  </a>
+                )}
               </td>
               <td className="p-3 text-ink-300 text-xs">
                 {it.emailOpenCount > 0 ? (

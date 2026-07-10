@@ -33,11 +33,26 @@ export type PublicFeedback = {
 export const api = {
   public: {
     get: (token: string) => req<PublicFeedback>(`/public/feedback/${token}`),
-    submitRating: (token: string, rating: number) =>
+    submitRating: (
+      token: string,
+      rating: number,
+      extras?: { testimonial?: string; imageUrl?: string },
+    ) =>
       req<{ rating: number }>(`/public/feedback/${token}/rating`, {
         method: 'POST',
-        body: JSON.stringify({ rating }),
+        body: JSON.stringify({ rating, ...extras }),
       }),
+    uploadImage: async (token: string, file: File): Promise<{ url: string }> => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${BASE}/public/feedback/${token}/image`, {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await extractError(res));
+      return res.json() as Promise<{ url: string }>;
+    },
     submitPrivate: (token: string, privateFeedback: string) =>
       req<{ ok: true }>(`/public/feedback/${token}/private`, {
         method: 'POST',
@@ -137,6 +152,8 @@ export type AdminFeedback = {
   platformKey: string | null;
   platformClickedAt: string | null;
   privateFeedback: string | null;
+  testimonial: string | null;
+  imageUrl: string | null;
   reminderCount: number;
   lastReminderAt: string | null;
   createdAt: string;
