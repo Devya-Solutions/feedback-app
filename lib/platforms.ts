@@ -7,7 +7,7 @@ export const REVIEW_PLATFORMS = [
   { key: 'goodfirms', name: 'GoodFirms', url: '' },
   { key: 'the-manifest', name: 'The Manifest', url: '' },
   { key: 'designrush', name: 'DesignRush', url: '' },
-  { key: 'trustpilot', name: 'Trustpilot', url: '' },
+  { key: 'trustpilot', name: 'Trustpilot', url: 'https://www.trustpilot.com/review/devya.dev' },
   { key: 'upcity', name: 'UpCity', url: '' },
   { key: 'sortlist', name: 'Sortlist', url: '' },
   { key: 'agency-spotter', name: 'Agency Spotter', url: '' },
