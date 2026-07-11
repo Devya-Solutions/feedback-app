@@ -6,11 +6,7 @@ export const REVIEW_PLATFORMS = [
   { key: 'g2', name: 'G2', url: '' },
   { key: 'goodfirms', name: 'GoodFirms', url: '' },
   { key: 'the-manifest', name: 'The Manifest', url: '' },
-  { key: 'designrush', name: 'DesignRush', url: '' },
   { key: 'trustpilot', name: 'Trustpilot', url: 'https://www.trustpilot.com/review/devya.dev' },
-  { key: 'upcity', name: 'UpCity', url: '' },
-  { key: 'sortlist', name: 'Sortlist', url: '' },
-  { key: 'agency-spotter', name: 'Agency Spotter', url: '' },
   { key: 'google', name: 'Google Business Profile', url: '' },
 ] as const;
 
