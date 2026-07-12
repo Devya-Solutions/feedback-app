@@ -121,8 +121,27 @@ export default function FeedbackFlow({ token }: { token: string }) {
           <PrivateFeedbackPanel onSubmit={(b) => void handlePrivateSubmit(b)} />
         )}
         {stage === 'done' && <DonePanel rating={data?.rating ?? null} />}
+
+        {stage !== 'loading' && <PrivacyFooter />}
       </div>
     </main>
+  );
+}
+
+function PrivacyFooter() {
+  const t = useT();
+  return (
+    <p className="mt-12 border-t border-ink-800 pt-6 text-xs leading-relaxed text-ink-500">
+      {t('client.privacyNote')}{' '}
+      <a
+        href="https://www.devya.dev/privacy-policy"
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-ink-300"
+      >
+        {t('client.privacyPolicy')}
+      </a>
+    </p>
   );
 }
 
@@ -173,8 +192,14 @@ function RatingPanel({
   const [note, setNote] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const t = useT();
+
+  // A note or photo may be published publicly, so it needs explicit consent
+  // (GDPR). A star-only rating carries no personal content and needs none.
+  const hasPublishable = note.trim().length > 0 || image !== null;
+  const blocked = selected === null || (hasPublishable && !consent);
 
   const pickImage = (file: File | null) => {
     setPreview((prev) => {
@@ -259,14 +284,31 @@ function RatingPanel({
         </button>
       )}
 
+      {hasPublishable && (
+        <label className="flex items-start gap-3 mb-6 text-sm text-ink-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-yellow-400"
+          />
+          <span>{t('client.consentLabel')}</span>
+        </label>
+      )}
+
       <button
         type="button"
-        disabled={selected === null}
-        onClick={() => selected !== null && onSubmit(selected, note, image)}
+        disabled={blocked}
+        onClick={() => !blocked && onSubmit(selected!, note, image)}
         className="w-full rounded-full bg-white text-ink-950 font-medium px-6 py-3 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-ink-100 transition-colors"
       >
         {t('client.submitRating')}
       </button>
+      {hasPublishable && !consent && (
+        <p className="mt-3 text-xs text-ink-500 text-center">
+          {t('client.consentHint')}
+        </p>
+      )}
     </div>
   );
 }
