@@ -3,7 +3,7 @@
 // site's Organization sameAs and the feedback flow both learn about it.
 export const REVIEW_PLATFORMS = [
   { key: 'clutch', name: 'Clutch', url: '' },
-  { key: 'g2', name: 'G2', url: '' },
+  { key: 'g2', name: 'G2', url: 'https://www.g2.com/products/devya-solutions/reviews' },
   { key: 'goodfirms', name: 'GoodFirms', url: '' },
   { key: 'the-manifest', name: 'The Manifest', url: '' },
   { key: 'trustpilot', name: 'Trustpilot', url: 'https://www.trustpilot.com/review/devya.dev' },
