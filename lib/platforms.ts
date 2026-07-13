@@ -4,7 +4,7 @@
 // Exception: Facebook is flow-only here — its page identity already lives in
 // seo-schemas SAME_AS, so we don't duplicate it into that file's REVIEW_PLATFORMS.
 export const REVIEW_PLATFORMS = [
-  { key: 'clutch', name: 'Clutch', url: '' },
+  { key: 'clutch', name: 'Clutch', url: 'https://clutch.co/profile/devya-solutions' },
   { key: 'g2', name: 'G2', url: 'https://www.g2.com/products/devya-solutions/reviews' },
   { key: 'goodfirms', name: 'GoodFirms', url: '' },
   { key: 'the-manifest', name: 'The Manifest', url: '' },
