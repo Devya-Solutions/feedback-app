@@ -13,3 +13,47 @@
     font-family: var(--font-sora);
   }
 }
+
+/* ── Form selects — system-wide dark popup, spacing, custom chevron ────────
+   Native <select> popups render white + cramped + harsh-blue on dark UI.
+   color-scheme:dark darkens the OS popup; appearance:none swaps the arrow for
+   a themed chevron; option rules add spacing where the engine honors them
+   (Firefox / Chromium on Win+Linux). Leaves each select's own bg/border. */
+select {
+  color-scheme: dark;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-inline-end: 2.25rem !important;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+select:dir(rtl) {
+  background-position: left 0.75rem center;
+}
+select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+select:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+select option {
+  background-color: #141414;
+  color: #f5f5f5;
+  padding: 10px 12px;
+  min-height: 2.25rem;
+}
+select option:checked {
+  background-color: #10b981;
+  color: #0a0a0a;
+  font-weight: 600;
+}
+select option:disabled {
+  color: #525252;
+}
