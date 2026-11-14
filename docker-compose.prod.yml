@@ -1,0 +1,35 @@
+# Production stack on the Devya VPS (/home/devya/projects/feedback-app).
+# No build here: scripts/deploy.sh builds the Next standalone server on the Mac,
+# ships it to releases/<sha> and points ./current at it. A stock Node image runs
+# it read-only. nginx proxies feedback.devya-solutions.com to 127.0.0.1:3153.
+# No secrets: the only Vercel env var was API_PROXY_TARGET (the backend URL).
+services:
+  web:
+    image: node:24.22.1-alpine
+    container_name: devya-feedback-app
+    restart: unless-stopped
+    user: "1000:1000"
+    working_dir: /app
+    command: ["node", "server.js"]
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      # Server-side /api/* rewrite target (same-origin for the browser).
+      API_PROXY_TARGET: https://api.devya-solutions.com
+    volumes:
+      - ./current:/app:ro
+    tmpfs:
+      # Next's image/fetch cache; the release tree itself stays read-only.
+      - /app/.next/cache:uid=1000,gid=1000,size=64m
+    ports:
+      # Loopback only: nginx is the public entry point.
+      - "127.0.0.1:3153:3000"
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
