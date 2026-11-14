@@ -56,7 +56,9 @@ trap 'rmdir "$LOCK" 2>/dev/null; rm -rf "${WORK:?}"' EXIT
   # The /api rewrite in next.config.mjs is resolved at build time.
   export API_PROXY_TARGET="https://api.devya-solutions.com"
   npm ci --no-audit --no-fund
-  npm run build
+  # Turbopack's next/font/google loader fails now and then on this Mac
+  # ("queries have exactly one entry"); one retry clears it.
+  npm run build || { echo "deploy: build failed, retrying once" >&2; npm run build; }
 )
 rmdir "$LOCK"
 trap 'rm -rf "${WORK:?}"' EXIT
