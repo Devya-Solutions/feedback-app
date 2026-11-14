@@ -8,6 +8,9 @@ services:
     image: node:24.22.1-alpine
     container_name: devya-feedback-app
     restart: unless-stopped
+    # Docker's default bridge: the VPS ran out of address pools for per-project
+    # networks. The app needs no private network (backends are reached by public URL).
+    network_mode: bridge
     user: "1000:1000"
     working_dir: /app
     command: ["node", "server.js"]
