@@ -45,16 +45,11 @@ if [ -n "$ENV_FILE" ]; then
   [ -s "$SRC/.env.production.local" ] || { echo "deploy: $ENV_FILE is empty" >&2; exit 1; }
 fi
 
-# --- build on this Mac (shared heavy-job lock when other agents use it) -------
-LOCK="$HOME/Projects/_wt/.heavy-lock"
-while [ "$(sysctl -n vm.loadavg 2>/dev/null | awk '{print int($2)}' || echo 0)" -ge 15 ]; do sleep 20; done
-if [ -d "$HOME/Projects/_wt" ]; then
-  until mkdir "$LOCK" 2>/dev/null; do
-    [ -n "$(find "$LOCK" -maxdepth 0 -mmin +20 2>/dev/null)" ] && rmdir "$LOCK"
-    sleep 15
-  done
-  trap 'rmdir "$LOCK" 2>/dev/null; rm -rf "${WORK:?}"' EXIT
-fi
+# --- build on this Mac: one heavy job at a time across agents, load < 15 first -
+LOCK=/tmp/vx-mac-build.lock
+while [ "$(sysctl -n vm.loadavg | awk '{print int($2)}')" -ge 15 ]; do sleep 20; done
+until mkdir "$LOCK" 2>/dev/null; do sleep 20; done
+trap 'rmdir "$LOCK" 2>/dev/null; rm -rf "${WORK:?}"' EXIT
 (
   cd "$SRC"
   export NEXT_TELEMETRY_DISABLED=1
@@ -63,7 +58,8 @@ fi
   npm ci --no-audit --no-fund
   npm run build
 )
-if [ -d "$HOME/Projects/_wt" ]; then rmdir "$LOCK" 2>/dev/null || true; trap 'rm -rf "${WORK:?}"' EXIT; fi
+rmdir "$LOCK"
+trap 'rm -rf "${WORK:?}"' EXIT
 rm -f "$SRC/.env.production.local"
 
 # --- assemble the release tree ------------------------------------------------
