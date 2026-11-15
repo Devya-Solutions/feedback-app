@@ -68,8 +68,15 @@ rm -f "$SRC/.env.production.local"
 REL="$SRC/.next/standalone"
 [ -f "$REL/server.js" ] || { echo "deploy: $REL/server.js missing (is output: 'standalone' set?)" >&2; exit 1; }
 rm -f "$REL"/.env*
-cp -R "$SRC/.next/static" "$REL/.next/static"
-[ -d "$SRC/public" ] && cp -R "$SRC/public" "$REL/public"
+# Copy contents, not directories: the standalone tree can already hold a partial
+# .next/static, and copying the directory onto it nests everything in .next/static/static,
+# so every page's JS 404s (the devya.dev splash outage, 2026-11-15).
+mkdir -p "$REL/.next/static"
+cp -R "$SRC/.next/static/." "$REL/.next/static/"
+if [ -d "$SRC/public" ]; then mkdir -p "$REL/public"; cp -R "$SRC/public/." "$REL/public/"; fi
+if [ -e "$REL/.next/static/static" ] || [ -e "$REL/public/public" ]; then
+  echo "deploy: static or public copied into a nested directory" >&2; exit 1
+fi
 mkdir -p "$REL/.next/cache"   # mount point for the writable tmpfs
 echo "$SHA" > "$REL/REVISION"
 
@@ -112,6 +119,17 @@ title="$(ssh -n "$VPS" "curl -s -m 15 -H 'Host: ${HOSTS[0]}' http://127.0.0.1:$P
   | grep -o '<title>[^<]*' | head -1 | sed 's/<title>//' || true)"
 echo "deploy: title on 127.0.0.1:$PORT$TITLE_PATH = \"$title\""
 case "$title" in *"$EXPECT_TITLE"*) ;; *) echo "deploy: expected a title containing \"$EXPECT_TITLE\"" >&2; exit 1 ;; esac
+
+# A 200 page is not a working page: every /_next/static asset it references must
+# load too (a nested static copy left devya.dev on its splash screen, 2026-11-15).
+ssh -n "$VPS" "missing=0 total=0;
+  for a in \$(curl -s -m 15 -H 'Host: ${HOSTS[0]}' http://127.0.0.1:$PORT$TITLE_PATH | grep -oE '(src|href)=\"/_next/static/[^\"]+' | cut -d'\"' -f2 | sort -u); do
+    total=\$((total + 1));
+    c=\$(curl -s -o /dev/null -m 15 -w '%{http_code}' -H 'Host: ${HOSTS[0]}' \"http://127.0.0.1:$PORT\$a\");
+    [ \"\$c\" = 200 ] || { echo \"deploy: \$a -> \$c\" >&2; missing=\$((missing + 1)); };
+  done;
+  echo \"deploy: $TITLE_PATH references \$total static assets, \$missing missing\";
+  [ \"\$total\" -gt 0 ] && [ \"\$missing\" = 0 ]"
 
 # Informational: hosts still on Vercel DNS answer 402 until their records move.
 for host in "${HOSTS[@]}"; do
