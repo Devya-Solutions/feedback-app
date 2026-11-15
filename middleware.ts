@@ -24,8 +24,13 @@ export function middleware(req: NextRequest) {
   // No session: redirect to the external admin login, preserving where they came
   // from — including the query string (?name=&email=&company= from the admin
   // "Request review" deep link) so the prefill survives the round trip.
+  // The public origin comes from the proxy headers: behind nginx req.nextUrl.origin
+  // is the container's bind address (https://0.0.0.0:3000), not the site.
+  const host = req.headers.get('x-forwarded-host')?.split(',')[0].trim() || req.headers.get('host');
+  const proto = req.headers.get('x-forwarded-proto')?.split(',')[0].trim() || 'https';
+  const origin = host ? `${proto}://${host}` : req.nextUrl.origin;
   const loginUrl = new URL(ADMIN_LOGIN_URL);
-  loginUrl.searchParams.set('from', req.nextUrl.origin + pathname + req.nextUrl.search);
+  loginUrl.searchParams.set('from', origin + pathname + req.nextUrl.search);
   return NextResponse.redirect(loginUrl);
 }
 
